@@ -1,12 +1,11 @@
 uint128
 -------
 
-[![GoDoc](https://godoc.org/github.com/lukechampine/uint128?status.svg)](https://godoc.org/github.com/lukechampine/uint128)
-[![Go Report Card](http://goreportcard.com/badge/github.com/lukechampine/uint128)](https://goreportcard.com/report/github.com/lukechampine/uint128)
+```
+go get github.com/gaze-network/uint128
+```
 
-```
-go get lukechampine.com/uint128
-```
+This project is a fork of [lukechampine/uint128](https://github.com/lukechampine/uint128) with additional features and improvements, such as changing behaviour from panicking to returning errors.
 
 `uint128` provides a high-performance `Uint128` type that supports standard arithmetic
 operations. Unlike `math/big`, operations on `Uint128` values always produce new values
