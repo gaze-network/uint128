@@ -15,6 +15,11 @@ var Zero Uint128
 // Max is the largest possible uint128 value.
 var Max = New(math.MaxUint64, math.MaxUint64)
 
+var (
+	ErrValueNegative = errors.New("value cannot be negative")
+	ErrValueOverflow = errors.New("value overflows Uint128")
+)
+
 // A Uint128 is an unsigned 128-bit number.
 type Uint128 struct {
 	Lo, Hi uint64
@@ -42,10 +47,9 @@ func (u Uint128) Equals64(v uint64) bool {
 
 // Cmp compares u and v and returns:
 //
-//   -1 if u <  v
-//    0 if u == v
-//   +1 if u >  v
-//
+//	-1 if u <  v
+//	 0 if u == v
+//	+1 if u >  v
 func (u Uint128) Cmp(v Uint128) int {
 	if u == v {
 		return 0
@@ -58,10 +62,9 @@ func (u Uint128) Cmp(v Uint128) int {
 
 // Cmp64 compares u and v and returns:
 //
-//   -1 if u <  v
-//    0 if u == v
-//   +1 if u >  v
-//
+//	-1 if u <  v
+//	 0 if u == v
+//	+1 if u >  v
 func (u Uint128) Cmp64(v uint64) int {
 	if u.Hi == 0 && u.Lo == v {
 		return 0
@@ -102,14 +105,18 @@ func (u Uint128) Xor64(v uint64) Uint128 {
 	return Uint128{u.Lo ^ v, u.Hi ^ 0}
 }
 
-// Add returns u+v.
+// Add returns u+v. If the result overflows, it is ignored.
 func (u Uint128) Add(v Uint128) Uint128 {
 	lo, carry := bits.Add64(u.Lo, v.Lo, 0)
-	hi, carry := bits.Add64(u.Hi, v.Hi, carry)
-	if carry != 0 {
-		panic("overflow")
-	}
+	hi, _ := bits.Add64(u.Hi, v.Hi, carry)
 	return Uint128{lo, hi}
+}
+
+// Add returns u+v. The second return value is true if the result overflows.
+func (u Uint128) AddOverflow(v Uint128) (Uint128, bool) {
+	lo, carry := bits.Add64(u.Lo, v.Lo, 0)
+	hi, carry := bits.Add64(u.Hi, v.Hi, carry)
+	return Uint128{lo, hi}, carry != 0
 }
 
 // AddWrap returns u+v with wraparound semantics; for example,
@@ -120,14 +127,18 @@ func (u Uint128) AddWrap(v Uint128) Uint128 {
 	return Uint128{lo, hi}
 }
 
-// Add64 returns u+v.
+// Add64 returns u+v. If the result overflows, it is ignored.
 func (u Uint128) Add64(v uint64) Uint128 {
 	lo, carry := bits.Add64(u.Lo, v, 0)
-	hi, carry := bits.Add64(u.Hi, 0, carry)
-	if carry != 0 {
-		panic("overflow")
-	}
+	hi, _ := bits.Add64(u.Hi, 0, carry)
 	return Uint128{lo, hi}
+}
+
+// Add64 returns u+v. The second return value is true if the result overflows.
+func (u Uint128) Add64Overflow(v uint64) (Uint128, bool) {
+	lo, carry := bits.Add64(u.Lo, v, 0)
+	hi, carry := bits.Add64(u.Hi, 0, carry)
+	return Uint128{lo, hi}, carry != 0
 }
 
 // AddWrap64 returns u+v with wraparound semantics; for example,
@@ -138,14 +149,18 @@ func (u Uint128) AddWrap64(v uint64) Uint128 {
 	return Uint128{lo, hi}
 }
 
-// Sub returns u-v.
+// Sub returns u-v. If the result underflows, it is ignored.
 func (u Uint128) Sub(v Uint128) Uint128 {
 	lo, borrow := bits.Sub64(u.Lo, v.Lo, 0)
-	hi, borrow := bits.Sub64(u.Hi, v.Hi, borrow)
-	if borrow != 0 {
-		panic("underflow")
-	}
+	hi, _ := bits.Sub64(u.Hi, v.Hi, borrow)
 	return Uint128{lo, hi}
+}
+
+// Sub returns u-v. The second return value is true if the result underflows.
+func (u Uint128) SubOverflow(v Uint128) (Uint128, bool) {
+	lo, borrow := bits.Sub64(u.Lo, v.Lo, 0)
+	hi, borrow := bits.Sub64(u.Hi, v.Hi, borrow)
+	return Uint128{lo, hi}, borrow != 0
 }
 
 // SubWrap returns u-v with wraparound semantics; for example,
@@ -156,14 +171,18 @@ func (u Uint128) SubWrap(v Uint128) Uint128 {
 	return Uint128{lo, hi}
 }
 
-// Sub64 returns u-v.
+// Sub64 returns u-v. If the result underflows, it is ignored.
 func (u Uint128) Sub64(v uint64) Uint128 {
 	lo, borrow := bits.Sub64(u.Lo, v, 0)
-	hi, borrow := bits.Sub64(u.Hi, 0, borrow)
-	if borrow != 0 {
-		panic("underflow")
-	}
+	hi, _ := bits.Sub64(u.Hi, 0, borrow)
 	return Uint128{lo, hi}
+}
+
+// Sub64 returns u-v. The second return value is true if the result underflows.
+func (u Uint128) Sub64Overflow(v uint64) (Uint128, bool) {
+	lo, borrow := bits.Sub64(u.Lo, v, 0)
+	hi, borrow := bits.Sub64(u.Hi, 0, borrow)
+	return Uint128{lo, hi}, borrow != 0
 }
 
 // SubWrap64 returns u-v with wraparound semantics; for example,
@@ -174,17 +193,25 @@ func (u Uint128) SubWrap64(v uint64) Uint128 {
 	return Uint128{lo, hi}
 }
 
-// Mul returns u*v, panicking on overflow.
+// Mul returns u*v. If the result overflows, it is ignored.
 func (u Uint128) Mul(v Uint128) Uint128 {
+	hi, lo := bits.Mul64(u.Lo, v.Lo)
+	_, p1 := bits.Mul64(u.Hi, v.Lo)
+	_, p3 := bits.Mul64(u.Lo, v.Hi)
+	hi, c0 := bits.Add64(hi, p1, 0)
+	hi, _ = bits.Add64(hi, p3, c0)
+	return Uint128{lo, hi}
+}
+
+// Mul returns u*v, panicking on overflow.
+func (u Uint128) MulOverflow(v Uint128) (Uint128, bool) {
 	hi, lo := bits.Mul64(u.Lo, v.Lo)
 	p0, p1 := bits.Mul64(u.Hi, v.Lo)
 	p2, p3 := bits.Mul64(u.Lo, v.Hi)
 	hi, c0 := bits.Add64(hi, p1, 0)
 	hi, c1 := bits.Add64(hi, p3, c0)
-	if (u.Hi != 0 && v.Hi != 0) || p0 != 0 || p2 != 0 || c1 != 0 {
-		panic("overflow")
-	}
-	return Uint128{lo, hi}
+	overflow := (u.Hi != 0 && v.Hi != 0) || p0 != 0 || p2 != 0 || c1 != 0
+	return Uint128{lo, hi}, overflow
 }
 
 // MulWrap returns u*v with wraparound semantics; for example,
@@ -195,15 +222,21 @@ func (u Uint128) MulWrap(v Uint128) Uint128 {
 	return Uint128{lo, hi}
 }
 
-// Mul64 returns u*v, panicking on overflow.
+// Mul64 returns u*v. If the result overflows, it is ignored.
 func (u Uint128) Mul64(v uint64) Uint128 {
+	hi, lo := bits.Mul64(u.Lo, v)
+	_, p1 := bits.Mul64(u.Hi, v)
+	hi, _ = bits.Add64(hi, p1, 0)
+	return Uint128{lo, hi}
+}
+
+// Mul64 returns u*v, panicking on overflow.
+func (u Uint128) Mul64Overflow(v uint64) (Uint128, bool) {
 	hi, lo := bits.Mul64(u.Lo, v)
 	p0, p1 := bits.Mul64(u.Hi, v)
 	hi, c0 := bits.Add64(hi, p1, 0)
-	if p0 != 0 || c0 != 0 {
-		panic("overflow")
-	}
-	return Uint128{lo, hi}
+	overflow := p0 != 0 || c0 != 0
+	return Uint128{lo, hi}, overflow
 }
 
 // MulWrap64 returns u*v with wraparound semantics; for example,
@@ -436,15 +469,15 @@ func FromBytesBE(b []byte) Uint128 {
 
 // FromBig converts i to a Uint128 value. It panics if i is negative or
 // overflows 128 bits.
-func FromBig(i *big.Int) (u Uint128) {
+func FromBig(i *big.Int) (u Uint128, err error) {
 	if i.Sign() < 0 {
-		panic("value cannot be negative")
+		return Uint128{}, ErrValueNegative
 	} else if i.BitLen() > 128 {
-		panic("value overflows Uint128")
+		return Uint128{}, ErrValueOverflow
 	}
 	u.Lo = i.Uint64()
 	u.Hi = i.Rsh(i, 64).Uint64()
-	return u
+	return u, nil
 }
 
 // FromString parses s as a Uint128 value.
