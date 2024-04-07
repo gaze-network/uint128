@@ -54,6 +54,18 @@ func TestUint128(t *testing.T) {
 		if x.Uint8() != uint8(x.Lo) {
 			t.Fatal("Uint8 is not the lowest 8 bits of Lo for", x)
 		}
+		if x.IsUint64() != (x.Hi == 0) {
+			t.Fatal("IsUint64 is not equivalent to Hi == 0 for", x)
+		}
+		if x.IsUint32() != (x.Hi == 0 && x.Lo <= math.MaxUint32) {
+			t.Fatal("IsUint32 is not equivalent to Hi == 0 && Lo <= math.MaxUint32 for", x)
+		}
+		if x.IsUint16() != (x.Hi == 0 && x.Lo <= math.MaxUint16) {
+			t.Fatal("IsUint16 is not equivalent to Hi == 0 && Lo <= math.MaxUint16 for", x)
+		}
+		if x.IsUint8() != (x.Hi == 0 && x.Lo <= math.MaxUint8) {
+			t.Fatal("IsUint8 is not equivalent to Hi == 0 && Lo <= math.MaxUint8 for", x)
+		}
 
 		b := make([]byte, 16)
 		x.PutBytes(b)
