@@ -42,6 +42,19 @@ func TestUint128(t *testing.T) {
 			t.Fatal("FromBig is not the inverse of Big for", x)
 		}
 
+		if x.Uint64() != x.Lo {
+			t.Fatal("Uint64 is not the lowest 64 bits of Lo for", x)
+		}
+		if x.Uint32() != uint32(x.Lo) {
+			t.Fatal("Uint32 is not the lowest 32 bits of Lo for", x)
+		}
+		if x.Uint16() != uint16(x.Lo) {
+			t.Fatal("Uint16 is not the lowest 16 bits of Lo for", x)
+		}
+		if x.Uint8() != uint8(x.Lo) {
+			t.Fatal("Uint8 is not the lowest 8 bits of Lo for", x)
+		}
+
 		b := make([]byte, 16)
 		x.PutBytes(b)
 		if FromBytes(b) != x {
