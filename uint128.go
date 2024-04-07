@@ -32,6 +32,16 @@ func (u Uint128) IsZero() bool {
 	return u == Uint128{}
 }
 
+// Uint64 returns the lower 64 bits of u.
+func (u Uint128) Uint64() uint64 {
+	return u.Lo
+}
+
+// Uint32 returns the lower 32 bits of u.
+func (u Uint128) Uint32() uint32 {
+	return uint32(u.Lo)
+}
+
 // Equals returns true if u == v.
 //
 // Uint128 values can be compared directly with ==, but use of the Equals method
