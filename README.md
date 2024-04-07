@@ -9,6 +9,7 @@ This project is a fork of [lukechampine/uint128](https://github.com/lukechampine
 1. Change overflow behavior from panicking to returning whether the operation overflowed.
    - Add `AddOverflow`, `Add64Overflow`, `SubOverflow`, `Sub64Overflow`, `MulOverflow`, `Mul64Overflow` functions which returns additional boolean indicating whether the operation overflowed. The original functions now ignores overflow instead of panicking.
    - Change `FromBig` function behaviour to return errors instead of panicking.
+2. Add conversion functions `Uint64()`, `Uint32()`, `Uint16()`, `Uint8()` to convert `Uint128` to native types.
 
 `uint128` provides a high-performance `Uint128` type that supports standard arithmetic
 operations. Unlike `math/big`, operations on `Uint128` values always produce new values
