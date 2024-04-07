@@ -52,6 +52,26 @@ func (u Uint128) Uint8() uint8 {
 	return uint8(u.Lo)
 }
 
+// Uint returns true if u can be safely represented as a uint64.
+func (u Uint128) IsUint64() bool {
+	return u.Hi == 0
+}
+
+// Uint returns true if u can be safely represented as a uint32.
+func (u Uint128) IsUint32() bool {
+	return u.Hi == 0 && u.Lo <= math.MaxUint32
+}
+
+// Uint returns true if u can be safely represented as a uint16.
+func (u Uint128) IsUint16() bool {
+	return u.Hi == 0 && u.Lo <= math.MaxUint16
+}
+
+// Uint returns true if u can be safely represented as a uint8.
+func (u Uint128) IsUint8() bool {
+	return u.Hi == 0 && u.Lo <= math.MaxUint8
+}
+
 // Equals returns true if u == v.
 //
 // Uint128 values can be compared directly with ==, but use of the Equals method
