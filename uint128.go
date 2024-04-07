@@ -42,6 +42,16 @@ func (u Uint128) Uint32() uint32 {
 	return uint32(u.Lo)
 }
 
+// Uint16 returns the lower 16 bits of u.
+func (u Uint128) Uint16() uint16 {
+	return uint16(u.Lo)
+}
+
+// Uint8 returns the lower 8 bits of u.
+func (u Uint128) Uint8() uint8 {
+	return uint8(u.Lo)
+}
+
 // Equals returns true if u == v.
 //
 // Uint128 values can be compared directly with ==, but use of the Equals method
