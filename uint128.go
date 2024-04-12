@@ -525,3 +525,38 @@ func FromString(s string) (u Uint128, err error) {
 	_, err = fmt.Sscan(s, &u)
 	return
 }
+
+// MarshalText implements encoding.TextMarshaler.
+func (u Uint128) MarshalText() ([]byte, error) {
+	return []byte(u.String()), nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (u *Uint128) UnmarshalText(text []byte) error {
+	v, err := FromString(string(text))
+	if err != nil {
+		return err
+	}
+	*u = v
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler.
+func (u Uint128) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + u.String() + `"`), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (u *Uint128) UnmarshalJSON(data []byte) error {
+	// data may be a JSON string or a JSON number
+	// check if data is a JSON string first
+	if len(data) > 0 && data[0] == '"' && data[len(data)-1] == '"' {
+		data = data[1 : len(data)-1]
+	}
+	v, err := FromString(string(data))
+	if err != nil {
+		return err
+	}
+	*u = v
+	return nil
+}

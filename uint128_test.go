@@ -524,3 +524,67 @@ func TestFromBytesBE(t *testing.T) {
 		t.Fatalf("mismatch:\n%v !=\n%v", u1, u2)
 	}
 }
+
+func TestMarshal(t *testing.T) {
+	number := "42540766411282592856903984951653826562"
+
+	u, err := FromString(number)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	btext, err := u.MarshalText()
+	if err != nil {
+		t.Fatal(err)
+	}
+	bjson, err := u.MarshalJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedText := number
+	if string(btext) != expectedText {
+		t.Fatalf("text mismatch:\n%v !=\n%v", string(btext), expectedText)
+	}
+	expectedJSON := `"` + number + `"`
+	if string(bjson) != expectedJSON {
+		t.Fatalf("json mismatch:\n%v !=\n%v", string(bjson), expectedJSON)
+	}
+}
+
+func TestUnmarshal(t *testing.T) {
+	number := "42540766411282592856903984951653826562"
+
+	var u Uint128
+	err := u.UnmarshalText([]byte(number))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := FromString(number)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if u != expected {
+		t.Fatalf("text mismatch:\n%v !=\n%v", u, expected)
+	}
+
+	err = u.UnmarshalText([]byte("invalid"))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	err = u.UnmarshalJSON([]byte(`"` + number + `"`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if u != expected {
+		t.Fatalf("json mismatch:\n%v !=\n%v", u, expected)
+	}
+
+	err = u.UnmarshalJSON([]byte(`"invalid"`))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
